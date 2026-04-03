@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase, isConfigured } from '@/lib/supabase';
 import { useEffect } from 'react';
 
 export interface Agent {
@@ -21,6 +21,8 @@ export const useAgents = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (!supabase || !isConfigured) return;
+
     const channel = supabase
       .channel('agents-changes')
       .on(
@@ -40,6 +42,10 @@ export const useAgents = () => {
   return useQuery({
     queryKey: ['agents'],
     queryFn: async (): Promise<Agent[]> => {
+      if (!supabase || !isConfigured) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('agents')
         .select('*')

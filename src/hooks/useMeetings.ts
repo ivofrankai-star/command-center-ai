@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase, isConfigured } from '@/lib/supabase';
 
 export interface ActionItem {
   task: string;
@@ -30,6 +30,10 @@ export const useMeetings = () => {
   return useQuery({
     queryKey: ['meetings'],
     queryFn: async (): Promise<Meeting[]> => {
+      if (!supabase || !isConfigured) {
+        return [];
+      }
+
       const { data: meetings, error } = await supabase
         .from('meetings')
         .select('*')

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase, isConfigured } from '@/lib/supabase';
 
 export interface LogEntry {
   id: string;
@@ -14,6 +14,10 @@ export const useLogEntries = (limit: number = 50) => {
   return useQuery({
     queryKey: ['log-entries', limit],
     queryFn: async (): Promise<LogEntry[]> => {
+      if (!supabase || !isConfigured) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('log_entries')
         .select(`

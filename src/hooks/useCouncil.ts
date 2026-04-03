@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase, isConfigured } from '@/lib/supabase';
 
 export interface CouncilMessage {
   agentEmoji: string;
@@ -29,6 +29,10 @@ export const useCouncilSessions = () => {
   return useQuery({
     queryKey: ['council-sessions'],
     queryFn: async (): Promise<CouncilSession[]> => {
+      if (!supabase || !isConfigured) {
+        return [];
+      }
+
       const { data: sessions, error } = await supabase
         .from('council_sessions')
         .select('*')

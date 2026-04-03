@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase, isConfigured } from '@/lib/supabase';
 import { useEffect } from 'react';
 
 export interface Task {
@@ -18,6 +18,8 @@ export const useTasks = () => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (!supabase || !isConfigured) return;
+
     const channel = supabase
       .channel('tasks-changes')
       .on(
@@ -37,6 +39,10 @@ export const useTasks = () => {
   return useQuery({
     queryKey: ['tasks'],
     queryFn: async (): Promise<Task[]> => {
+      if (!supabase || !isConfigured) {
+        return [];
+      }
+
       const { data: tasks, error } = await supabase
         .from('tasks')
         .select(`
@@ -70,6 +76,10 @@ export const useUpdateTask = () => {
 
   return useMutation({
     mutationFn: async ({ taskId, updates }: { taskId: string; updates: Partial<Task> }) => {
+      if (!supabase || !isConfigured) {
+        throw new Error('Supabase not configured');
+      }
+
       const dbUpdates: any = {};
       
       if (updates.column) {
@@ -103,6 +113,10 @@ export const useCreateTask = () => {
 
   return useMutation({
     mutationFn: async (task: { title: string; priority?: string; assigned_agent_id?: string }) => {
+      if (!supabase || !isConfigured) {
+        throw new Error('Supabase not configured');
+      }
+
       const { data, error } = await supabase
         .from('tasks')
         .insert({
@@ -129,6 +143,10 @@ export const useDeleteTask = () => {
 
   return useMutation({
     mutationFn: async (taskId: string) => {
+      if (!supabase || !isConfigured) {
+        throw new Error('Supabase not configured');
+      }
+
       const { error } = await supabase
         .from('tasks')
         .delete()
