@@ -41,6 +41,8 @@ export const useLogEntries = (limit: number = 50) => {
         timestamp: formatTimestamp(entry.created_at),
       }));
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 

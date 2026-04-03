@@ -75,6 +75,8 @@ export const useMeetings = () => {
 
       return meetingsWithItems;
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 

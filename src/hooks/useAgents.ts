@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, isConfigured } from '@/lib/supabase';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface Agent {
   id: string;
@@ -19,23 +19,50 @@ export interface Agent {
 
 export const useAgents = () => {
   const queryClient = useQueryClient();
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     if (!supabase || !isConfigured) return;
 
-    const channel = supabase
-      .channel('agents-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'agents' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['agents'] });
+    let mounted = true;
+
+    const setupRealtime = async () => {
+      try {
+        if (channelRef.current) {
+          await supabase.removeChannel(channelRef.current);
         }
-      )
-      .subscribe();
+
+        if (!mounted) return;
+
+        const channel = supabase.channel('agents-changes', {
+          config: { broadcast: { ack: true } }
+        });
+
+        channel.on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'agents' },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ['agents'] });
+          }
+        );
+
+        if (mounted) {
+          await channel.subscribe();
+          channelRef.current = channel;
+        }
+      } catch (error) {
+        console.warn('Realtime subscription failed:', error);
+      }
+    };
+
+    setupRealtime();
 
     return () => {
-      supabase.removeChannel(channel);
+      mounted = false;
+      if (channelRef.current && supabase) {
+        supabase.removeChannel(channelRef.current).catch(() => {});
+        channelRef.current = null;
+      }
     };
   }, [queryClient]);
 
@@ -68,6 +95,8 @@ export const useAgents = () => {
         accentColor: agent.accent_color || '#10b981',
       }));
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 

@@ -90,6 +90,8 @@ export const useCouncilSessions = () => {
 
       return sessionsWithData;
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 

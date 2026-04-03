@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase, isConfigured } from '@/lib/supabase';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export interface Task {
   id: string;
@@ -16,23 +16,50 @@ export interface Task {
 
 export const useTasks = () => {
   const queryClient = useQueryClient();
+  const channelRef = useRef<any>(null);
 
   useEffect(() => {
     if (!supabase || !isConfigured) return;
 
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'tasks' },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    let mounted = true;
+
+    const setupRealtime = async () => {
+      try {
+        if (channelRef.current) {
+          await supabase.removeChannel(channelRef.current);
         }
-      )
-      .subscribe();
+
+        if (!mounted) return;
+
+        const channel = supabase.channel('tasks-changes', {
+          config: { broadcast: { ack: true } }
+        });
+
+        channel.on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'tasks' },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ['tasks'] });
+          }
+        );
+
+        if (mounted) {
+          await channel.subscribe();
+          channelRef.current = channel;
+        }
+      } catch (error) {
+        console.warn('Realtime subscription failed:', error);
+      }
+    };
+
+    setupRealtime();
 
     return () => {
-      supabase.removeChannel(channel);
+      mounted = false;
+      if (channelRef.current && supabase) {
+        supabase.removeChannel(channelRef.current).catch(() => {});
+        channelRef.current = null;
+      }
     };
   }, [queryClient]);
 
@@ -68,6 +95,8 @@ export const useTasks = () => {
         assigned_agent_id: task.assigned_agent_id,
       }));
     },
+    retry: 2,
+    retryDelay: 1000,
   });
 };
 
