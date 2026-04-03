@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { logEntries } from '@/data/mockData';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useLogEntries } from '@/hooks/useLogEntries';
 
 const categoryStyles: Record<string, string> = {
   observation: 'bg-primary/15 text-primary border-primary/30',
@@ -13,7 +14,18 @@ const categoryStyles: Record<string, string> = {
 
 const AILog = () => {
   const [filter, setFilter] = useState('all');
-  const filtered = filter === 'all' ? logEntries : logEntries.filter((e) => e.category === filter);
+  const { data: logEntries, isLoading, error } = useLogEntries(50);
+
+  const filtered = filter === 'all' ? logEntries : logEntries?.filter((e) => e.category === filter);
+
+  if (error) {
+    return (
+      <div className="glass-card p-8 text-center">
+        <p className="text-destructive">Failed to load log entries</p>
+        <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -31,9 +43,19 @@ const AILog = () => {
             <SelectItem value="fyi">FYI</SelectItem>
           </SelectContent>
         </Select>
-      </div>
-      <div className="space-y-3">
-        {filtered.map((entry, i) => (
+  </div>
+  <div className="space-y-3">
+    {isLoading
+      ? Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="glass-card p-4 flex gap-3">
+            <Skeleton className="w-6 h-6 rounded" />
+            <div className="flex-1">
+              <Skeleton className="h-4 w-24 mb-2" />
+              <Skeleton className="h-3 w-full" />
+            </div>
+          </div>
+        ))
+      : filtered?.map((entry, i) => (
           <motion.div
             key={entry.id}
             initial={{ opacity: 0, x: -20 }}
@@ -51,11 +73,11 @@ const AILog = () => {
                 <span className="ml-auto text-xs text-muted-foreground">{entry.timestamp}</span>
               </div>
               <p className="text-sm text-muted-foreground">{entry.message}</p>
-            </div>
-          </motion.div>
-        ))}
       </div>
-    </div>
+    </motion.div>
+        ))}
+  </div>
+</div>
   );
 };
 

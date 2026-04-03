@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { ChevronDown, ChevronUp, CheckCircle2, Clock, Loader2 } from 'lucide-react';
-import { councilSessions } from '@/data/mockData';
+import { useCouncilSessions } from '@/hooks/useCouncil';
 
 const statusIcon = {
   done: <CheckCircle2 className="w-3.5 h-3.5 text-primary" />,
@@ -18,10 +19,31 @@ const statusBadge: Record<string, string> = {
 
 const Council = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
+  const { data: councilSessions, isLoading, error } = useCouncilSessions();
+
+  if (error) {
+    return (
+      <div className="glass-card p-8 text-center">
+        <p className="text-destructive">Failed to load council sessions</p>
+        <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {councilSessions.map((session, i) => (
+      {isLoading
+        ? Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="glass-card p-5">
+              <Skeleton className="h-4 w-24 mb-2" />
+              <Skeleton className="h-3 w-96" />
+              <div className="flex gap-2 mt-3">
+                <Skeleton className="h-6 w-24 rounded-full" />
+                <Skeleton className="h-6 w-24 rounded-full" />
+              </div>
+            </div>
+          ))
+        : councilSessions?.map((session, i) => (
         <motion.div
           key={session.id}
           initial={{ opacity: 0, y: 10 }}
@@ -87,10 +109,10 @@ const Council = () => {
                 </div>
               </motion.div>
             )}
-          </AnimatePresence>
-        </motion.div>
-      ))}
-    </div>
+      </AnimatePresence>
+    </motion.div>
+          ))}
+  </div>
   );
 };
 

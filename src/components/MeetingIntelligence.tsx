@@ -4,9 +4,10 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Calendar, TrendingUp, CheckSquare, Clock, Search, Globe, Sparkles, ChevronDown, ChevronUp, ExternalLink, Share2 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from 'recharts';
-import { meetings } from '@/data/mockData';
+import { useMeetings } from '@/hooks/useMeetings';
 import DOMPurify from 'dompurify';
 
 const typeColors: Record<string, string> = {
@@ -28,6 +29,7 @@ const typeBadgeStyles: Record<string, string> = {
 };
 
 const MeetingIntelligence = () => {
+  const { data: meetings, isLoading, error } = useMeetings();
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('recent');
   const [expanded, setExpanded] = useState<string | null>(null);
@@ -35,10 +37,10 @@ const MeetingIntelligence = () => {
   const [hasActionItems, setHasActionItems] = useState(false);
   const [externalOnly, setExternalOnly] = useState(false);
 
-  const totalMeetings = meetings.length;
-  const thisWeek = meetings.filter((m) => new Date(m.date) > new Date(Date.now() - 7 * 86400000)).length;
-  const openActions = meetings.reduce((sum, m) => sum + m.action_items.filter((a) => !a.done).length, 0);
-  const avgDuration = Math.round(meetings.reduce((s, m) => s + m.duration_minutes, 0) / meetings.length);
+  const totalMeetings = meetings?.length || 0;
+  const thisWeek = meetings?.filter((m) => new Date(m.date) > new Date(Date.now() - 7 * 86400000)).length || 0;
+  const openActions = meetings?.reduce((sum, m) => sum + m.action_items.filter((a) => !a.done).length, 0) || 0;
+  const avgDuration = meetings && meetings.length > 0 ? Math.round(meetings.reduce((s, m) => s + m.duration_minutes, 0) / meetings.length) : 0;
 
   const kpis = [
     { label: 'Total Meetings', value: totalMeetings, icon: Calendar },
@@ -48,12 +50,14 @@ const MeetingIntelligence = () => {
   ];
 
   const pieData = useMemo(() => {
+    if (!meetings) return [];
     const counts: Record<string, number> = {};
     meetings.forEach((m) => { counts[m.meeting_type] = (counts[m.meeting_type] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, []);
+  }, [meetings]);
 
   const barData = useMemo(() => {
+    if (!meetings) return [];
     const months: Record<string, number> = {};
     meetings.forEach((m) => {
       const d = new Date(m.date);
@@ -61,9 +65,10 @@ const MeetingIntelligence = () => {
       months[key] = (months[key] || 0) + 1;
     });
     return Object.entries(months).map(([month, count]) => ({ month, count }));
-  }, []);
+  }, [meetings]);
 
   const filtered = useMemo(() => {
+    if (!meetings) return [];
     let list = [...meetings];
     if (search) list = list.filter((m) => m.title.toLowerCase().includes(search.toLowerCase()));
     if (hasActionItems) list = list.filter((m) => m.action_items.some((a) => !a.done));
@@ -79,7 +84,16 @@ const MeetingIntelligence = () => {
       return b.duration_minutes - a.duration_minutes;
     });
     return list;
-  }, [search, sortBy, dateRange, hasActionItems, externalOnly]);
+  }, [meetings, search, sortBy, dateRange, hasActionItems, externalOnly]);
+
+  if (error) {
+    return (
+      <div className="glass-card p-8 text-center">
+        <p className="text-destructive">Failed to load meetings</p>
+        <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
+      </div>
+    );
+  }
 
   const getInitials = (name: string) => name.split(' ').map((w) => w[0]).join('').slice(0, 2);
 
@@ -158,9 +172,16 @@ const MeetingIntelligence = () => {
         </Select>
       </div>
 
-      {/* Meeting list */}
-      <div className="space-y-3">
-        {filtered.map((m, i) => (
+{/* Meeting list */}
+<div className="space-y-3">
+    {isLoading
+      ? Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="glass-card p-4">
+            <Skeleton className="h-4 w-32 mb-2" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+        ))
+      : filtered.map((m, i) => (
           <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="glass-card overflow-hidden">
             <button onClick={() => setExpanded(expanded === m.id ? null : m.id)} className="w-full p-4 flex items-center gap-4 text-left hover:bg-secondary/10 transition-colors">
               <Badge className={`text-xs shrink-0 ${typeBadgeStyles[m.meeting_type] || 'bg-muted text-muted-foreground'}`}>{m.meeting_type}</Badge>
@@ -209,10 +230,10 @@ const MeetingIntelligence = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-          </motion.div>
+      </motion.div>
         ))}
-      </div>
     </div>
+  </div>
   );
 };
 

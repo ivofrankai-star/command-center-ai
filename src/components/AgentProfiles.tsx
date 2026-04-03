@@ -1,11 +1,37 @@
 import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { agents } from '@/data/mockData';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAgents } from '@/hooks/useAgents';
 
-const AgentProfiles = () => (
-  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-    {agents.map((agent, i) => (
+const AgentProfiles = () => {
+  const { data: agents, isLoading, error } = useAgents();
+
+  if (error) {
+    return (
+      <div className="glass-card p-8 text-center">
+        <p className="text-destructive">Failed to load agents</p>
+        <p className="text-sm text-muted-foreground mt-2">{error.message}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {isLoading
+        ? Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="glass-card p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Skeleton className="w-12 h-12 rounded-lg" />
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-24 mb-2" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+              </div>
+              <Skeleton className="h-20 w-full" />
+            </div>
+          ))
+        : agents?.map((agent, i) => (
       <motion.div
         key={agent.id}
         initial={{ opacity: 0, scale: 0.95 }}
@@ -43,10 +69,11 @@ const AgentProfiles = () => (
             ))}
           </div>
         </div>
-        <Button variant="outline" className="mt-4 w-full border-primary/20 text-primary hover:bg-primary/10">View Details</Button>
-      </motion.div>
-    ))}
-  </div>
-);
+      <Button variant="outline" className="mt-4 w-full border-primary/20 text-primary hover:bg-primary/10">View Details</Button>
+    </motion.div>
+          ))}
+    </div>
+  );
+};
 
 export default AgentProfiles;
