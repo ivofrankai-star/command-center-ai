@@ -5,6 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAgents } from '@/hooks/useAgents';
 import { useTasks } from '@/hooks/useTasks';
 import { useLogEntries } from '@/hooks/useLogEntries';
+import { useAvgResponseTime } from '@/hooks/useResponseMetrics';
 import { useEffect, useState, useMemo } from 'react';
 
 const CountUp = ({ target, duration = 1.5 }: { target: number; duration?: number }) => {
@@ -23,16 +24,17 @@ const CountUp = ({ target, duration = 1.5 }: { target: number; duration?: number
 };
 
 const CommandDeck = () => {
-  const { data: agents, isLoading: agentsLoading } = useAgents();
-  const { data: tasks } = useTasks();
-  const { data: logEntries, isLoading: logsLoading } = useLogEntries(10);
+	const { data: agents, isLoading: agentsLoading } = useAgents();
+	const { data: tasks } = useTasks();
+	const { data: logEntries, isLoading: logsLoading } = useLogEntries(10);
+	const { data: avgResponseTime } = useAvgResponseTime();
 
   const metrics = useMemo(() => {
     const tasksCompleted = tasks?.filter(t => t.column === 'done').length || 0;
     const activeAgents = agents?.filter(a => a.status === 'active').length || 0;
     const totalAgents = agents?.length || 0;
     const alerts = logEntries?.filter(l => l.category === 'reminder').length || 0;
-    const avgResponse = 1.2;
+		const avgResponse = avgResponseTime ?? 1.2;
 
     return [
       { label: 'Tasks Completed', value: tasksCompleted, icon: CheckCircle2, trend: `${tasksCompleted} done` },

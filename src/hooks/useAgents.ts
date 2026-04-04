@@ -34,7 +34,7 @@ export const useAgents = () => {
 
         if (!mounted) return;
 
-        const channel = supabase.channel('agents-changes', {
+			const channel = supabase.channel(`agents-${crypto.randomUUID?.() || Date.now()}`, {
           config: { broadcast: { ack: true } }
         });
 

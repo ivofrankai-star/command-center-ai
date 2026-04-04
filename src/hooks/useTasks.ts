@@ -31,7 +31,7 @@ export const useTasks = () => {
 
         if (!mounted) return;
 
-        const channel = supabase.channel('tasks-changes', {
+			const channel = supabase.channel(`tasks-${crypto.randomUUID?.() || Date.now()}`, {
           config: { broadcast: { ack: true } }
         });
 
