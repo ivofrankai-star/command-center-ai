@@ -83,7 +83,11 @@ const TaskBoard = () => {
                     <span className="ml-auto text-sm">{task.agentEmoji}</span>
                   </div>
                   <p className="text-sm font-medium text-foreground">{task.title}</p>
-                  {task.progress !== undefined && (
+                  {task.column === 'done' && (task.progress === undefined || task.progress === 0) ? (
+                    <p className="text-xs text-primary mt-2 font-medium">✓ Complete</p>
+                  ) : task.progress === 0 || task.progress === undefined ? (
+                    <p className="text-xs text-muted-foreground mt-2 animate-pulse">Starting...</p>
+                  ) : (
                     <div className="mt-2">
                       <div className="h-1.5 rounded-full bg-secondary">
                         <div

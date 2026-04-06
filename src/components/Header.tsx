@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Settings } from 'lucide-react';
 import { useAgents } from '@/hooks/useAgents';
+import SettingsDialog from '@/components/SettingsDialog';
 
 const Header = () => {
   const { data: agents } = useAgents();
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const activeAgent = agents?.find(a => a.status === 'active') || agents?.[0];
 
   return (
@@ -22,10 +25,11 @@ const Header = () => {
             <p className="text-xs text-muted-foreground">Last seen: {activeAgent?.lastSeen || '--'}</p>
           </div>
         </div>
-        <button className="p-2 rounded-lg hover:bg-secondary transition-colors">
+        <button className="p-2 rounded-lg hover:bg-secondary transition-colors" onClick={() => setSettingsOpen(true)}>
           <Settings className="w-4 h-4 text-muted-foreground" />
         </button>
       </div>
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 };

@@ -43,6 +43,12 @@ const Council = () => {
               </div>
             </div>
           ))
+        : councilSessions?.length === 0 ? (
+            <div className="glass-card p-8 text-center">
+              <p className="text-lg text-muted-foreground">No council sessions yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Agent debates will appear here</p>
+            </div>
+          )
         : councilSessions?.map((session, i) => (
         <motion.div
           key={session.id}

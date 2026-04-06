@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { useAgents } from '@/hooks/useAgents';
 
 const AgentProfiles = () => {
@@ -54,14 +55,28 @@ const AgentProfiles = () => {
             <Badge variant="outline" className="text-xs capitalize">{agent.status}</Badge>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-2 rounded-lg bg-secondary/20 text-center">
-              <p className="text-lg font-bold font-mono text-foreground">{agent.tasksCompleted}</p>
-              <p className="text-xs text-muted-foreground">Tasks Done</p>
-            </div>
-            <div className="p-2 rounded-lg bg-secondary/20 text-center">
-              <p className="text-lg font-bold font-mono text-foreground">{agent.accuracy}%</p>
-              <p className="text-xs text-muted-foreground">Accuracy</p>
-            </div>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="p-2 rounded-lg bg-secondary/20 text-center cursor-help">
+                  <p className="text-lg font-bold font-mono text-foreground">{agent.tasksCompleted}</p>
+                  <p className="text-xs text-muted-foreground">Tasks Done</p>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="glass-card border-primary/10 text-sm text-muted-foreground w-56">
+                Tasks completed updates automatically when agents finish work.
+              </HoverCardContent>
+            </HoverCard>
+            <HoverCard>
+              <HoverCardTrigger asChild>
+                <div className="p-2 rounded-lg bg-secondary/20 text-center cursor-help">
+                  <p className="text-lg font-bold font-mono text-foreground">{agent.accuracy}%</p>
+                  <p className="text-xs text-muted-foreground">Accuracy</p>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent className="glass-card border-primary/10 text-sm text-muted-foreground w-56">
+                Accuracy based on validation pass rate.
+              </HoverCardContent>
+            </HoverCard>
           </div>
           <div className="flex flex-wrap gap-1.5">
             {agent.skills.map((s) => (
