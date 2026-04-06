@@ -34,15 +34,16 @@ const CommandDeck = () => {
     const activeAgents = agents?.filter(a => a.status === 'active').length || 0;
     const totalAgents = agents?.length || 0;
     const alerts = logEntries?.filter(l => l.category === 'reminder').length || 0;
-		const avgResponse = avgResponseTime ?? 1.2;
+    const hasResponseData = avgResponseTime?.hasData ?? false;
+    const avgTime = avgResponseTime?.avgTime ?? 0;
 
     return [
-      { label: 'Tasks Completed', value: tasksCompleted, icon: CheckCircle2, trend: `${tasksCompleted} done` },
-      { label: 'Active Agents', value: activeAgents, icon: Zap, trend: `${activeAgents} of ${totalAgents}` },
-      { label: 'Alerts', value: alerts, icon: AlertTriangle, trend: `${alerts} pending` },
-      { label: 'Avg Response', value: avgResponse, icon: Clock, trend: '-0.3s' },
+      { label: 'Tasks Completed', value: tasksCompleted, icon: CheckCircle2, trend: `${tasksCompleted} done`, noData: false },
+      { label: 'Active Agents', value: activeAgents, icon: Zap, trend: `${activeAgents} of ${totalAgents}`, noData: false },
+      { label: 'Alerts', value: alerts, icon: AlertTriangle, trend: `${alerts} pending`, noData: false },
+      { label: 'Avg Response', value: hasResponseData ? avgTime : 0, icon: Clock, trend: hasResponseData ? '-0.3s' : 'Awaiting agent activity', noData: !hasResponseData },
     ];
-  }, [tasks, agents, logEntries]);
+  }, [tasks, agents, logEntries, avgResponseTime]);
 
   return (
     <div className="space-y-6">
@@ -62,7 +63,7 @@ const CommandDeck = () => {
               <span className="text-sm text-muted-foreground">{m.label}</span>
             </div>
             <p className="text-3xl font-bold text-foreground">
-              {Number.isInteger(m.value) ? <CountUp target={m.value} /> : m.value + 's'}
+              {m.noData ? <span className="text-lg text-muted-foreground font-normal">No data</span> : Number.isInteger(m.value) ? <CountUp target={m.value} /> : m.value + 's'}
             </p>
             <p className="text-xs text-primary mt-1">{m.trend}</p>
           </motion.div>

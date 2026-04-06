@@ -1,11 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase, isConfigured } from '@/lib/supabase';
 
+interface ResponseMetric {
+	avgTime: number;
+	hasData: boolean;
+}
+
 export const useAvgResponseTime = () => {
 	return useQuery({
 		queryKey: ['avg-response'],
-		queryFn: async (): Promise<number> => {
-			if (!supabase || !isConfigured) return 1.2;
+		queryFn: async (): Promise<ResponseMetric> => {
+			if (!supabase || !isConfigured) return { avgTime: 0, hasData: false };
 
 			const { data, error } = await supabase
 				.from('response_metrics')
@@ -13,9 +18,10 @@ export const useAvgResponseTime = () => {
 				.order('recorded_at', { ascending: false })
 				.limit(50);
 
-			if (error || !data?.length) return 1.2;
+			if (error || !data?.length) return { avgTime: 0, hasData: false };
 
-			return Math.round((data.reduce((s, r) => s + r.response_time_seconds, 0) / data.length) * 10) / 10;
+			const avg = Math.round((data.reduce((s, r) => s + r.response_time_seconds, 0) / data.length) * 10) / 10;
+			return { avgTime: avg, hasData: true };
 		},
 		refetchInterval: 5000,
 	});

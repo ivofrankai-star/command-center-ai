@@ -181,6 +181,12 @@ const MeetingIntelligence = () => {
             <Skeleton className="h-3 w-48" />
           </div>
         ))
+      : filtered.length === 0 ? (
+            <div className="glass-card p-8 text-center">
+              <p className="text-lg text-muted-foreground">No meetings found</p>
+              <p className="text-sm text-muted-foreground mt-1">Meetings will appear here as they are tracked</p>
+            </div>
+          )
       : filtered.map((m, i) => (
           <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="glass-card overflow-hidden">
             <button onClick={() => setExpanded(expanded === m.id ? null : m.id)} className="w-full p-4 flex items-center gap-4 text-left hover:bg-secondary/10 transition-colors">
